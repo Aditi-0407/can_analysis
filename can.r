@@ -1,48 +1,54 @@
 library("complexheatmap")
-library("readxl")
+
 library("circlize")
-d<-read.csv("C:/Users/Dell !/OneDrive/Documents/can.csv",row.names=1)
-print(d)
+file=read.csv("can.csv",row.names=1)
+print(file)
 
 #cpm
-cpm_matrix = d
-for(i in 1:ncol(d)){
-  cpm_matrix[,i]=(d[,i]/sum(d[,i]))*1000000
+cpm_matrix = file
+for(i in 1:ncol(file)){
+  cpm_matrix[,i]=(file[,i]/sum(file[,i]))*1000000
 }
 cpm_matrix[is.na(cpm_matrix)]=0
+
+#list()
+#rm(list=ls())
 
 #log
 logcpm = log2(cpm_matrix+1)
 summary(logcpm)
 
 #z-score
-z_score = (logcpm-rowMeans(logcpm))/rowSds(as.matrix(logcpm))
-row(logcpm)
-z_score[is.na(z_score)]=0
+library(matrixStats)
+z_score = (logcpm-rowMeans(logcpm))/rowSds(as.matrix(logcpm))[row(logcpm)]
+#z_score[is.na(z_score)]=0
 print(z_score)
 
+
+
 #variance
-vargenes = apply(z_scores,1,var)
+vargenes = apply(z_score,1,var)
 print(vargenes)
 
 vargenes = sort(vargenes,decreasing = T)
 top50 = vargenes[1:50]
 pmat = z_score[names(top50),]
+m=as.matrix(pmat)
 
 #heatmap
 library(ComplexHeatmap)
-heatmap(pmat)
+heatmap(m)
 
 #
 
-mat = matrix(NA, ncol= 4, nrow= nrow(d))
-rownames(mat)= rownames(d)
+mat = matrix(NA, ncol= 4, nrow= nrow(file))
+rownames(mat)= rownames(file)
 colnames(mat)= c('grp1','grp2','pval','log2FC')
 print(mat)
 
-for(i in 1:nrow(d)){
-  vec1 = as.numeric(d[i,1:4])
-  vec2 = as.numeric(d[i,5:7])
+for(i in 1:nrow(file)){
+  vec1 = as.numeric(file[i,1:4])
+  vec2 = as.numeric(file[i,5:7])
   res = t.test(vec1, vec2, paired = F, alternative = 'two.sided')
   mat[i,1]= res$estimate[[1]]
   mat[i,2]= res$estimate[[2]]
